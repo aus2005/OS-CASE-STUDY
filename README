@@ -1,51 +1,138 @@
-NOTE: we have stopped maintaining the x86 version of xv6, and switched
-our efforts to the RISC-V version
-(https://github.com/mit-pdos/xv6-riscv.git)
+# Case Study on xv6
 
-xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
-Version 6 (v6).  xv6 loosely follows the structure and style of v6,
-but is implemented for a modern x86-based multiprocessor using ANSI C.
+This project extends the MIT xv6 operating system by adding performance monitoring and process timing functionalities.  
+Below are the modifications made, along with screenshots.
 
-ACKNOWLEDGMENTS
+---
 
-xv6 is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
-to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14,
-2000)). See also https://pdos.csail.mit.edu/6.828/, which
-provides pointers to on-line resources for v6.
+## 1. Process Structure Enhancement
+**File:** `proc.h`  
+We have added timing fields to track CPU usage metrics for each process. These fields store the process start time, accumulated CPU time, and last scheduling timestamp.  
 
-xv6 borrows code from the following sources:
-    JOS (asm.h, elf.h, mmu.h, bootasm.S, ide.c, console.c, and others)
-    Plan 9 (entryother.S, mp.h, mp.c, lapic.c)
-    FreeBSD (ioapic.c)
-    NetBSD (console.c)
+![Process Structure Enhancement](images/proch.png)
 
-The following people have made contributions: Russ Cox (context switching,
-locking), Cliff Frey (MP), Xiao Yu (MP), Nickolai Zeldovich, and Austin
-Clements.
+---
 
-We are also grateful for the bug reports and patches contributed by Silas
-Boyd-Wickizer, Anton Burtsev, Cody Cutler, Mike CAT, Tej Chajed, eyalz800,
-Nelson Elhage, Saar Ettinger, Alice Ferrazzi, Nathaniel Filardo, Peter
-Froehlich, Yakir Goaron,Shivam Handa, Bryan Henry, Jim Huang, Alexander
-Kapshuk, Anders Kaseorg, kehao95, Wolfgang Keller, Eddie Kohler, Austin
-Liew, Imbar Marinescu, Yandong Mao, Matan Shabtay, Hitoshi Mitake, Carmi
-Merimovich, Mark Morrissey, mtasm, Joel Nider, Greg Price, Ayan Shafqat,
-Eldar Sehayek, Yongming Shen, Cam Tenny, tyfkda, Rafael Ubal, Warren
-Toomey, Stephen Tu, Pablo Ventura, Xi Wang, Keiichi Watanabe, Nicolas
-Wolovick, wxdao, Grant Wu, Jindong Zhang, Icenowy Zheng, and Zou Chang Wei.
+## 2. Process Initialization
+**File:** `proc.c` (`allocproc()` function)  
+The timing fields are initialized when a new process is created. The start time is set to the current system ticks, and the CPU usage counter is initialized to zero.  
 
-The code in the files that constitute xv6 is
-Copyright 2006-2018 Frans Kaashoek, Robert Morris, and Russ Cox.
+![Process Initialization](images/procfirst.png)
+![Process Initialization](images/proc1.png)
+![Process Initialization](images/proc2.png)
 
-ERROR REPORTS
 
-We don't process error reports (see note on top of this file).
+---
 
-BUILDING AND RUNNING XV6
+## 3. CPU Time Accumulation
+**File:** `trap.c` (timer interrupt handler)  
+The CPU time counter for the currently running process is incremented on each timer interrupt. This provides CPU usage tracking.  
 
-To build xv6 on an x86 ELF machine (like Linux or FreeBSD), run
-"make". On non-x86 or non-ELF machines (like OS X, even on x86), you
-will need to install a cross-compiler gcc suite capable of producing
-x86 ELF binaries (see https://pdos.csail.mit.edu/6.828/).
-Then run "make TOOLPREFIX=i386-jos-elf-". Now install the QEMU PC
-simulator and run "make qemu".
+![CPU Time Accumulation](images/trap.png)
+
+---
+
+## 4. System Call Interface Definition
+**File:** `syscall.h`  
+The unique system call numbers for the new performance monitoring functions were defined.  
+
+![Syscall Interface](images/syscall.h.png)
+
+---
+
+## 5. System Call Registration
+**File:** `syscall.c`  
+The new system calls were registered in the kernel’s system call dispatch table, allowing the kernel to route user-space calls to the appropriate handler functions.  
+
+![Syscall Registration](images/syscall.png)
+
+---
+
+## 6. System Call Implementation
+**File:** `proc.c`  
+The new system call handlers were added:
+- `int sys_procinfo(void)` → Provides detailed information about all running processes, including PID, name, state, CPU time, and memory usage.  
+- `int sys_systime(void)` → Allows querying of CPU time usage for specific processes, enabling the `time` command to measure execution duration.  
+
+![Syscall Implementation](images/proclast.png)
+
+---
+
+## 7. Kernel Function Declarations
+**File:** `defs.h`  
+The new system call functions were declared for kernel internal use.  
+
+![Defs.h Modification](images/defs.png)
+
+---
+
+## 8. User Space Interface
+**File:** `user.h`  
+Provides user-space function declarations that applications can use to access the new system calls through the standard library interface.  
+
+![User.h Modification](images/userh.png)
+
+---
+
+## 9. User-space System Call Stubs
+**File:** `usys.S`  
+Assembly stubs were generated to handle the transition from user space to kernel space for the new system calls, following xv6’s system call convention.  
+
+![usys.S Modification](images/usys.png)
+
+---
+
+## 10. Performance Monitor Application
+**File:** `perfmon.c`  
+A user application that displays comprehensive system performance information:
+- System uptime  
+- Process list (with detailed statistics)  
+- CPU usage per process  
+- Memory consumption  
+- Process states  
+
+It provides real-time monitoring similar to Unix `top` or `ps`.  
+
+![Performance Monitor](images/perfmon.png)
+
+---
+
+## 11. Time Application
+**File:** `time.c`  
+A user application that measures execution time of other programs, providing:
+- Execution time  
+- CPU time consumed  
+- CPU utilization percentage  
+
+This is similar to the Unix `time` command.  
+
+![Time Application](images/time1.png)
+![Time Application](images/time2.png)
+
+---
+
+## 12. Build System Integration
+**File:** `Makefile`  
+The new applications (`perfmon` and `time`) were integrated into the xv6 build system, ensuring they are compiled and included in the filesystem image.  
+
+![Makefile Modification](images/Makefile.png)
+
+---
+
+# Results
+
+Below are the results after implementing all modifications:
+
+### Result 1
+![Result 1](images/result1.png)
+
+### Result 2
+![Result 2](images/result2.png)
+
+### Result 3
+![Result 3](images/result3.png)
+
+---
+
+## Conclusion
+With these enhancements, xv6 now supports performance monitoring and process execution profiling, providing a learning experience similar to Unix utilities (`ps`, `top`, `time`) within a simple teaching OS.
