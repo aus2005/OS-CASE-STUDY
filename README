@@ -1,138 +1,65 @@
-# Case Study on xv6
 
 This project extends the MIT xv6 operating system by adding performance monitoring and process timing functionalities.  
-Below are the modifications made, along with screenshots.
+Below are the modifications made.
 
----
+1. Process structure enhancement
+(proc.h)
+We have added the timing fields to track the CPU usage metrics for each process. These fields store the process start time, accumulated CPU time, and last scheduling timestamp. 
 
-## 1. Process Structure Enhancement
-**File:** `proc.h`  
-We have added timing fields to track CPU usage metrics for each process. These fields store the process start time, accumulated CPU time, and last scheduling timestamp.  
+2. Process Initialization
+(proc.c in the allocproc() function)
+The timing fields are initialized when a new process is created. The start time is set to the current system ticks, and the CPU usage counter is initialized to zero.
 
-![Process Structure Enhancement](images/proch.png)
-
----
-
-## 2. Process Initialization
-**File:** `proc.c` (`allocproc()` function)  
-The timing fields are initialized when a new process is created. The start time is set to the current system ticks, and the CPU usage counter is initialized to zero.  
-
-![Process Initialization](images/procfirst.png)
-![Process Initialization](images/proc1.png)
-![Process Initialization](images/proc2.png)
+ 
+3. CPU Time Accumulation
+(trap.c in the timer interrupt handler)
+The CPU time counter for the currently running process is incremented on each timer interrupt. This provides CPU usage tracking.
 
 
----
+4. System Call Interface Definition
+(syscall.h)
+The unique system call numbers for the new performance monitoring functions were defined. 
+ 
 
-## 3. CPU Time Accumulation
-**File:** `trap.c` (timer interrupt handler)  
-The CPU time counter for the currently running process is incremented on each timer interrupt. This provides CPU usage tracking.  
 
-![CPU Time Accumulation](images/trap.png)
+5. System Call Registration
+(syscall.c) 
+The new system calls were registered in the kernel’s system call dispatch table, allowing the kernel to route user-space calls to the appropriate handler functions. 
 
----
 
-## 4. System Call Interface Definition
-**File:** `syscall.h`  
-The unique system call numbers for the new performance monitoring functions were defined.  
+6. System Call Implementation
+(proc.c)
+The new system call handlers were added.
+int sys_procinfo(void): Provides detailed information about all running processes, including PID, name, state, CPU time, and memory usage. 
+ int sys_systime(void): Allows querying of CPU time usage for specific processes, enabling the time command to measure execution duration.
 
-![Syscall Interface](images/syscall.h.png)
 
----
 
-## 5. System Call Registration
-**File:** `syscall.c`  
-The new system calls were registered in the kernel’s system call dispatch table, allowing the kernel to route user-space calls to the appropriate handler functions.  
 
-![Syscall Registration](images/syscall.png)
+7. Kernel Function Declarations
+(defs.h)
+The new system call functions were declared for the kernel’s internal use. This ensures proper function linkage.
 
----
 
-## 6. System Call Implementation
-**File:** `proc.c`  
-The new system call handlers were added:
-- `int sys_procinfo(void)` → Provides detailed information about all running processes, including PID, name, state, CPU time, and memory usage.  
-- `int sys_systime(void)` → Allows querying of CPU time usage for specific processes, enabling the `time` command to measure execution duration.  
+8. User Space Interface
+(user.h)
+This provides user-space function declarations that the applications can use to access the new system calls through the standard library interface.
 
-![Syscall Implementation](images/proclast.png)
+9. User-space system call stubs
+(usys.S)
+This generates assembly stubs that handle the transition from the user space to kernel space for the new system calls, following xv6’s system call convention.
 
----
+10. Performance Monitor Application
+(perfmon.c)
+This is the user application that displays the comprehensive system performance information including the system uptime, process list(along with detailed statistics), CPU usage per process, memory consumption and process states. It provides real-time system monitoring capabilities similar to Unix ‘top’ or ‘ps’ commands.
 
-## 7. Kernel Function Declarations
-**File:** `defs.h`  
-The new system call functions were declared for kernel internal use.  
 
-![Defs.h Modification](images/defs.png)
+11. Time application:
+(time.c)
+This is the user application that measures the execution time of other programs, providing execution time, CPU time consumed, and CPU utilization percentage. It enables performance profiling of user applications, which is similar to the Unix ‘time’ command.
 
----
 
-## 8. User Space Interface
-**File:** `user.h`  
-Provides user-space function declarations that applications can use to access the new system calls through the standard library interface.  
 
-![User.h Modification](images/userh.png)
-
----
-
-## 9. User-space System Call Stubs
-**File:** `usys.S`  
-Assembly stubs were generated to handle the transition from user space to kernel space for the new system calls, following xv6’s system call convention.  
-
-![usys.S Modification](images/usys.png)
-
----
-
-## 10. Performance Monitor Application
-**File:** `perfmon.c`  
-A user application that displays comprehensive system performance information:
-- System uptime  
-- Process list (with detailed statistics)  
-- CPU usage per process  
-- Memory consumption  
-- Process states  
-
-It provides real-time monitoring similar to Unix `top` or `ps`.  
-
-![Performance Monitor](images/perfmon.png)
-
----
-
-## 11. Time Application
-**File:** `time.c`  
-A user application that measures execution time of other programs, providing:
-- Execution time  
-- CPU time consumed  
-- CPU utilization percentage  
-
-This is similar to the Unix `time` command.  
-
-![Time Application](images/time1.png)
-![Time Application](images/time2.png)
-
----
-
-## 12. Build System Integration
-**File:** `Makefile`  
-The new applications (`perfmon` and `time`) were integrated into the xv6 build system, ensuring they are compiled and included in the filesystem image.  
-
-![Makefile Modification](images/Makefile.png)
-
----
-
-# Results
-
-Below are the results after implementing all modifications:
-
-### Result 1
-![Result 1](images/result1.png)
-
-### Result 2
-![Result 2](images/result2.png)
-
-### Result 3
-![Result 3](images/result3.png)
-
----
-
-## Conclusion
-With these enhancements, xv6 now supports performance monitoring and process execution profiling, providing a learning experience similar to Unix utilities (`ps`, `top`, `time`) within a simple teaching OS.
+12. Build system integration
+(Makefile)
+The new applications were integrated into the xv6 build system, ensuring that they are compiled and included in the filesystem image.
