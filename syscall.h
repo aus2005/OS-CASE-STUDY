@@ -20,3 +20,8 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
+#define SYS_procinfo 22
+#define SYS_systime 23
+
+//The unique system call numbers for the new performance monitoring functions were defined. 
+

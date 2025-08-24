@@ -120,7 +120,9 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
-
+int             sys_procinfo(void);
+int             sys_systime(void);
+//The new system call functions were declared for the kernel’s internal use
 // swtch.S
 void            swtch(struct context**, struct context*);
 

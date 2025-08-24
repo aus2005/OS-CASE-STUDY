@@ -49,7 +49,12 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  uint start_ticks;
+  uint cpu_ticks;
+  uint last_scheduled;
 };
+
+// We have added the timing fields to track the CPU usage metrics for each process. These fields store the process start time, accumulated CPU time, and last scheduling timestamp. 
 
 // Process memory is laid out contiguously, low addresses first:
 //   text

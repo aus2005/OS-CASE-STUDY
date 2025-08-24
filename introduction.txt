@@ -1,0 +1,68 @@
+Introduction
+1. xv6 Operating System
+
+A simple, modern re-implementation of UNIX Version 6
+
+Written in C, runs on x86 processors
+
+Small and clean source code (~a few thousand lines)
+
+Excellent for learning processes, scheduling, memory, and file systems
+
+Disadvantage: lacks advanced tools for monitoring performance
+
+2. System Calls
+
+Main interface between user programs and the kernel
+
+Needed because user programs cannot directly access hardware
+
+Used for process management, memory, file operations, I/O
+
+Acts as a bridge between applications and kernel resources
+
+3. Problem in xv6
+
+xv6 does not provide commands like ps, top, time
+
+Students cannot track CPU usage, execution time, or process statistics
+
+Makes performance analysis and scheduling experiments difficult
+
+4. Changes Done (Our Contribution)
+
+Added two new system calls:
+
+procinfo: gives process statistics (PID, state, CPU time, memory)
+
+systime: gives kernel clock values for profiling
+
+Built user applications:
+
+perfmon: real-time monitoring of processes
+
+time: execution time measurement for commands
+
+Extended process structure and scheduler for CPU usage tracking
+
+5. Environment Setup
+
+Cross-compiler: i686-elf-gcc
+
+Emulator: QEMU
+
+Source: xv6-public (MIT PDOS GitHub)
+
+Rebuilt xv6 with make and tested inside QEMU
+
+6. Significance of the Work
+
+Bridges the gap between theory and practice
+
+Enables real-time CPU performance profiling in xv6
+
+Makes xv6 more practical and interactive as a teaching tool
+
+Helps students understand the impact of scheduling and resource usage
+
+Demonstrates how even a minimal OS can be extended with new functionality

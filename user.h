@@ -23,6 +23,9 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int procinfo(void*, int); 
+int systime(int pid);
+//This provides user-space function declarations that the applications can use to access the new system calls 
 
 // ulib.c
 int stat(const char*, struct stat*);

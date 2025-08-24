@@ -54,6 +54,14 @@ trap(struct trapframe *tf)
       wakeup(&ticks);
       release(&tickslock);
     }
+
+    if(myproc() && myproc() -> state == RUNNING) {
+    myproc()-> cpu_ticks++;
+    }
+      
+  //The CPU time counter for the currently running process is incremented on each timer interrupt. 
+ 
+
     lapiceoi();
     break;
   case T_IRQ0 + IRQ_IDE:

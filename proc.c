@@ -112,6 +112,15 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  p->start_ticks = ticks;
+  p->cpu_ticks = 0;
+  p->last_scheduled = ticks;
+
+  //The timing fields are initialized when a new process is created. 
+  // The start time is set to the current system ticks, 
+  // and the CPU usage counter is initialized to zero.
+
+
   return p;
 }
 
@@ -343,6 +352,8 @@ scheduler(void)
       switchuvm(p);
       p->state = RUNNING;
 
+      p->last_scheduled = ticks;
+
       swtch(&(c->scheduler), p->context);
       switchkvm();
 
@@ -531,4 +542,67 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int
+sys_procinfo(void)
+{
+  struct proc *p;
+  int count = 0;
+  
+  cprintf("=== Process Information ===\n");
+  cprintf("PID\tNAME\t\tSTATE\t\tCPU_TIME\tMEM(KB)\n");
+  cprintf("---\t----\t\t-----\t\t--------\t-------\n");
+  
+  acquire(&ptable.lock);
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->state == UNUSED)
+      continue;
+      
+    char *state_str;
+    switch(p->state) {
+      case EMBRYO:   state_str = "EMBRYO"; break;
+      case SLEEPING: state_str = "SLEEP"; break;
+      case RUNNABLE: state_str = "RUNNABLE"; break;
+      case RUNNING:  state_str = "RUNNING"; break;
+      case ZOMBIE:   state_str = "ZOMBIE"; break;
+      default:       state_str = "UNKNOWN"; break;
+    }
+    
+    cprintf("%d\t%s\t\t%s\t\t%d\t\t%d\n",
+            p->pid, p->name, state_str, p->cpu_ticks, p->sz/1024);
+    count++;
+  }
+  release(&ptable.lock);
+  
+  return count;
+}
+
+
+int
+sys_systime(void)
+{
+  int pid;
+  if(argint(0, &pid) < 0)
+    return -1;
+    
+  struct proc *p;
+  acquire(&ptable.lock);
+  
+  if(pid == 0) {
+    uint cpu_time = myproc()->cpu_ticks;
+    release(&ptable.lock);
+    return cpu_time;
+  }
+  
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+    if(p->pid == pid) {
+      uint cpu_time = p->cpu_ticks;
+      release(&ptable.lock);
+      return cpu_time;
+    }
+  }
+  
+  release(&ptable.lock);
+  return -1;
 }
